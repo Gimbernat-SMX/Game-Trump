@@ -17,7 +17,7 @@ class Game:
     """
 
     # Interval de spawn de enemigos (frames)
-    SPAWN_INTERVAL = 300   # 5 segundos a 60 FPS
+    SPAWN_INTERVAL = 420   # 7 segundos a 60 FPS
 
     def __init__(self, screen: pygame.Surface, color_key: str, lives: int):
         self.screen   = screen
@@ -68,9 +68,8 @@ class Game:
     # ------------------------------------------------------------------
 
     def _initial_spawn(self):
-        """Spawn a couple of enemies on opposite side at start."""
-        for _ in range(2):
-            self._spawn_enemy()
+        """Spawn un solo enemigo al inicio."""
+        self._spawn_enemy()
 
     def _spawn_enemy(self):
         # Spawn on the opposite side from the player, or random platform
@@ -102,8 +101,8 @@ class Game:
         # Variable jump on X release
         if not keys[pygame.K_x] and prev_keys[pygame.K_x]:
             self.player.release_jump()
-        # Shoot on Z press
-        if keys[pygame.K_z] and not prev_keys[pygame.K_z]:
+        # Shoot: dispara mientras Z esté pulsado (limitado por cooldown interno)
+        if keys[pygame.K_z]:
             b = self.player.try_shoot()
             if b:
                 self.bullets.append(b)
@@ -116,7 +115,9 @@ class Game:
 
         # ---- Enemies ----
         self.spawn_timer -= 1
-        if self.spawn_timer <= 0 and self.kills < ENEMIES_TO_DEFEAT:
+        if (self.spawn_timer <= 0
+                and self.kills < ENEMIES_TO_DEFEAT
+                and len(self.enemies) < MAX_ENEMIES_ON_SCREEN):
             self._spawn_enemy()
             self.spawn_timer = self.SPAWN_INTERVAL
 
