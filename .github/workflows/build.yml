@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"   # Se activa al hacer: git tag v1.0 && git push --tags
 
+permissions:
+  contents: write   # necesario para crear releases y subir archivos
+
 jobs:
   build:
     strategy:
