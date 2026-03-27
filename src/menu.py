@@ -85,7 +85,7 @@ class Menu:
                 stats_y += 20
 
             self._shadow(self.font_small,
-                         "← / →  elegir   |   Enter confirmar",
+                         "← / →  elegir   |   Enter confirmar   |   F10 pantalla completa",
                          LIGHT_GRAY, SCREEN_HEIGHT - 35)
 
             pygame.display.flip()

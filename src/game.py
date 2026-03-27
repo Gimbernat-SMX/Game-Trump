@@ -5,7 +5,7 @@ from src.constants import (
     FPS, SCREEN_WIDTH, SCREEN_HEIGHT, ARENA_WIDTH,
     BLACK, WHITE, GRAY, YELLOW,
     ENEMY_SPAWNS, MAX_ENEMIES_ON_SCREEN, ENEMY_SPAWN_INTERVAL,
-    ENEMIES_TO_DEFEAT, PLAYER_SPAWN,
+    ENEMIES_TO_DEFEAT, PLAYER_SPAWN, DEFAULT_ZOOM,
 )
 from src.player import Player
 from src.enemy  import make_enemy
@@ -27,6 +27,11 @@ class Game:
 
         # Jugador
         self.player = Player(char_name, *PLAYER_SPAWN)
+
+        # Cámara / zoom
+        self.zoom = DEFAULT_ZOOM
+        # convert() para compatibilidad con el formato del display
+        self._world_surf = pygame.Surface((ARENA_WIDTH, SCREEN_HEIGHT)).convert()
 
         # Enemigos
         self.enemies: list   = []
@@ -59,10 +64,19 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); raise SystemExit
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                result = self._pause()
-                if result:
-                    return result
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    result = self._pause()
+                    if result:
+                        return result
+                elif event.key == pygame.K_F10:
+                    pygame.display.toggle_fullscreen()
+                elif event.key == pygame.K_w:
+                    self.player.queue_jump()
+                elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+                    self.zoom = min(3.0, self.zoom + 0.2)
+                elif event.key == pygame.K_MINUS:
+                    self.zoom = max(1.0, self.zoom - 0.2)
 
         # ---- Actualizar jugador ----
         self.player.update(self.platforms, self.enemies, self.assets)
@@ -100,20 +114,25 @@ class Game:
         return None
 
     def _draw(self):
-        # Fondo del arena
-        self.screen.blit(self.assets.arena, (0, 0))
-
-        # Plataformas
-        self.platforms.draw(self.screen)
-
-        # Enemigos
+        # Renderizar mundo a superficie auxiliar
+        ws = self._world_surf
+        ws.blit(self.assets.arena, (0, 0))
+        self.platforms.draw(ws)
         for e in self.enemies:
-            e.draw(self.screen)
+            e.draw(ws)
+        self.player.draw(ws)
 
-        # Jugador
-        self.player.draw(self.screen)
+        # Zoom: escalar el mundo completo y recortar centrado en el jugador
+        zoomed_w = int(ARENA_WIDTH * self.zoom)
+        zoomed_h = int(SCREEN_HEIGHT * self.zoom)
+        zoomed = pygame.transform.scale(ws, (zoomed_w, zoomed_h))
+        view_x = int(self.player.pos.x * self.zoom - ARENA_WIDTH / 2)
+        view_y = int(self.player.pos.y * self.zoom - SCREEN_HEIGHT / 2)
+        view_x = max(0, min(zoomed_w - ARENA_WIDTH, view_x))
+        view_y = max(0, min(zoomed_h - SCREEN_HEIGHT, view_y))
+        self.screen.blit(zoomed, (0, 0), pygame.Rect(view_x, view_y, ARENA_WIDTH, SCREEN_HEIGHT))
 
-        # HUD (panel lateral + barra vida jugador)
+        # HUD (panel lateral sin zoom)
         self.hud.draw(self.screen, self.player, self.enemies, self.kills)
 
         pygame.display.flip()
@@ -140,7 +159,7 @@ class Game:
 
             self.screen.blit(overlay, (0, 0))
             self._center(font,  "PAUSA",                        YELLOW, SCREEN_HEIGHT // 2 - 50)
-            self._center(small, "ESC – Continuar   |   Q – Salir", WHITE, SCREEN_HEIGHT // 2 + 20)
+            self._center(small, "ESC – Continuar   |   Q – Salir   |   +/- Zoom", WHITE, SCREEN_HEIGHT // 2 + 20)
             pygame.display.flip()
             self.clock.tick(30)
 

@@ -51,12 +51,12 @@ CHARACTER_LABELS = {
 
 # Stats: (weak_dmg, heavy_dmg, acceleration)
 CHARACTER_STATS = {
-    "mario": (3,    6,    1.0),
-    "luigi": (4,    8,    0.85),
-    "yoshi": (5,    10,   0.7),
-    "popo":  (5.5,  11,   0.6),
-    "nana":  (5.75, 11.5, 0.55),
-    "link":  (6,    12,   0.5),
+    "mario": (3,    6,    0.7),
+    "luigi": (4,    8,    0.6),
+    "yoshi": (5,    10,   0.5),
+    "popo":  (5.5,  11,   0.42),
+    "nana":  (5.75, 11.5, 0.38),
+    "link":  (6,    12,   0.35),
 }
 
 # Walk frame counts (de los archivos m1..mN del SSB)
@@ -108,3 +108,6 @@ ENEMY_SPAWNS = [            # posibles spawns de enemigos
 # ---- IA ----
 MAX_ENEMIES_ON_SCREEN = 3
 ENEMY_SPAWN_INTERVAL  = 360   # frames entre spawns
+
+# ---- Cámara / Zoom ----
+DEFAULT_ZOOM = 1.3   # factor de zoom inicial (1.0 = sin zoom)

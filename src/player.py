@@ -9,6 +9,11 @@ vec = pygame.math.Vector2
 class Player(Character):
     def __init__(self, char_name: str, x: int, y: int):
         super().__init__(char_name, x, y)
+        self._jump_queued = False
+
+    def queue_jump(self):
+        """Llamar desde el event loop al detectar KEYDOWN K_w."""
+        self._jump_queued = True
 
     def update(self, platforms, enemies, assets):
         keys = pygame.key.get_pressed()
@@ -19,11 +24,11 @@ class Player(Character):
             self.acc = vec(0.0, GRAVITY)
 
             moving = False
-            if keys[pygame.K_LEFT] and self.pos.x > 40:
+            if keys[pygame.K_a] and self.pos.x > 40:
                 self.acc.x = -self.acce
                 self.direc = "left"
                 moving = True
-            elif keys[pygame.K_RIGHT] and self.pos.x < ARENA_WIDTH - 40:
+            elif keys[pygame.K_d] and self.pos.x < ARENA_WIDTH - 40:
                 self.acc.x = self.acce
                 self.direc = "right"
                 moving = True
@@ -33,15 +38,17 @@ class Player(Character):
             else:
                 self._set_standing()
 
-            if keys[pygame.K_UP]:
+            if self._jump_queued:
+                self._jump_queued = False
                 self.jump(platforms)
 
-            if keys[pygame.K_z]:
+            if keys[pygame.K_f]:
                 self.weak_attack(enemies)
             elif keys[pygame.K_x]:
                 self.heavy_attack(enemies)
         else:
             self.acc = vec(0.0, GRAVITY)
+            self._jump_queued = False
 
         self._apply_physics(platforms)
         self._update_image(assets)
