@@ -6,7 +6,7 @@ SCREEN_WIDTH  = 900   # arena 700 + panel lateral 200
 SCREEN_HEIGHT = 700
 ARENA_WIDTH   = 700   # zona de juego (igual que el original)
 FPS = 60
-TITLE = "Super Smash Bros"
+TITLE = "GimbernatBros"
 
 # ---- Colores ----
 BLACK      = (0,   0,   0)
@@ -111,3 +111,17 @@ ENEMY_SPAWN_INTERVAL  = 360   # frames entre spawns
 
 # ---- Cámara / Zoom ----
 DEFAULT_ZOOM = 1.3   # factor de zoom inicial (1.0 = sin zoom)
+
+# ---- Multijugador ----
+MP_SPAWNS = [
+    (150, 600),   # slot 0
+    (550, 600),   # slot 1
+    (280, 400),   # slot 2
+    (450, 400),   # slot 3
+]
+PLAYER_COLORS = [
+    (100, 200, 255),  # slot 0 – azul
+    (255, 100, 100),  # slot 1 – rojo
+    (100, 255, 100),  # slot 2 – verde
+    (255, 255, 100),  # slot 3 – amarillo
+]

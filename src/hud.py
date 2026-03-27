@@ -30,7 +30,7 @@ class HUD:
         y = 20
 
         # Título
-        t = self.font_big.render("SUPER SMASH", True, WHITE)
+        t = self.font_big.render("GIMBERNAT", True, WHITE)
         screen.blit(t, (x, y)); y += 28
         t = self.font_big.render("BROS", True, WHITE)
         screen.blit(t, (x, y)); y += 40
