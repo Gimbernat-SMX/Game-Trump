@@ -24,19 +24,13 @@ jobs:
       - name: Instalar dependencias
         run: pip install pygame-ce pyinstaller
 
-      - name: Compilar con PyInstaller
+      - name: Compilar con PyInstaller (one-file)
         run: pyinstaller game.spec --clean --noconfirm
-
-      - name: Crear instalador con NSIS
-        run: |
-          choco install nsis --no-progress -y
-          cd installer
-          makensis windows.nsi
 
       - name: Subir al Release
         uses: softprops/action-gh-release@v2
         with:
-          files: installer/GimbernatBros-Installer.exe
+          files: dist/GimbernatBros.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
