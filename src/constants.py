@@ -78,8 +78,8 @@ DAMAGED      = "damaged"
 DEAD         = "dead"
 
 # ---- Combate ----
-ATTACK_DURATION   = 20   # frames que dura la animación de ataque
-DAMAGED_DURATION  = 18   # frames de animación de golpe
+ATTACK_DURATION   = 35   # frames que dura la animación de ataque (~0.58s a 60fps)
+DAMAGED_DURATION  = 22   # frames de animación de golpe
 ATTACK_RANGE      = 55   # pixeles de alcance del golpe
 
 # ---- Victoria ----

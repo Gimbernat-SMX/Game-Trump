@@ -46,13 +46,10 @@ class Menu:
 
             self.screen.blit(assets.char_bg, (0, 0))
 
-            # Overlay semitransparente en la mitad inferior
-            overlay = pygame.Surface((SCREEN_WIDTH, 340), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 140))
-            self.screen.blit(overlay, (0, SCREEN_HEIGHT - 340))
-
-            self._shadow(self.font_title, "Elige tu personaje",
-                         YELLOW, SCREEN_HEIGHT // 5)
+            # Overlay semitransparente en la mitad inferior (botones + stats)
+            overlay = pygame.Surface((SCREEN_WIDTH, 310), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 150))
+            self.screen.blit(overlay, (0, SCREEN_HEIGHT - 310))
 
             # Botones de personaje en una fila
             gap   = 20

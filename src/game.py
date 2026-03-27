@@ -7,7 +7,7 @@ from src.constants import (
     ENEMY_SPAWNS, MAX_ENEMIES_ON_SCREEN, ENEMY_SPAWN_INTERVAL,
     ENEMIES_TO_DEFEAT, PLAYER_SPAWN,
 )
-from src.player import make_player
+from src.player import Player
 from src.enemy  import make_enemy
 from src.hud    import HUD
 from src.platform_map import create_platform_group
@@ -26,7 +26,7 @@ class Game:
         self.platforms = create_platform_group()
 
         # Jugador
-        self.player = make_player(char_name, *PLAYER_SPAWN)
+        self.player = Player(char_name, *PLAYER_SPAWN)
 
         # Enemigos
         self.enemies: list   = []
