@@ -132,8 +132,9 @@ class Game:
         view_y = max(0, min(zoomed_h - SCREEN_HEIGHT, view_y))
         self.screen.blit(zoomed, (0, 0), pygame.Rect(view_x, view_y, ARENA_WIDTH, SCREEN_HEIGHT))
 
-        # HUD (panel lateral sin zoom)
-        self.hud.draw(self.screen, self.player, self.enemies, self.kills)
+        # HUD (panel lateral sin zoom; barra in-arena con cámara)
+        self.hud.draw(self.screen, self.player, self.enemies, self.kills,
+                      self.zoom, view_x, view_y)
 
         pygame.display.flip()
 

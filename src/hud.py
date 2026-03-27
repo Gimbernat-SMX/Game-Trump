@@ -14,9 +14,10 @@ class HUD:
         self.font_med   = pygame.font.SysFont("Arial", 18, bold=True)
         self.font_small = pygame.font.SysFont("Arial", 14)
 
-    def draw(self, screen: pygame.Surface, player, enemies: list, kills: int):
+    def draw(self, screen: pygame.Surface, player, enemies: list, kills: int,
+             zoom: float = 1.0, view_x: int = 0, view_y: int = 0):
         self._draw_panel(screen, player, enemies, kills)
-        self._draw_player_hud(screen, player)
+        self._draw_player_hud(screen, player, zoom, view_x, view_y)
 
     # ---- Panel lateral derecho ----
 
@@ -86,13 +87,14 @@ class HUD:
 
     # ---- Barra de vida encima del jugador (in-arena) ----
 
-    def _draw_player_hud(self, screen, player):
-        bw = 50
-        bh = 6
-        bx = player.rect.centerx - bw // 2
-        by = player.rect.top - 14
+    def _draw_player_hud(self, screen, player, zoom: float, view_x: int, view_y: int):
+        bw = int(50 * zoom)
+        bh = max(4, int(6 * zoom))
+        # Convertir coordenadas mundo → pantalla
+        sx = int(player.rect.centerx * zoom - view_x) - bw // 2
+        sy = int(player.rect.top * zoom - view_y) - int(14 * zoom)
         hp = max(0.0, player.health)
-        pygame.draw.rect(screen, (60, 60, 60), (bx, by, bw, bh))
+        pygame.draw.rect(screen, (60, 60, 60), (sx, sy, bw, bh))
         color = GREEN if hp > 60 else ORANGE if hp > 20 else RED
-        pygame.draw.rect(screen, color, (bx, by, int(bw * hp / 100), bh))
-        pygame.draw.rect(screen, WHITE, (bx, by, bw, bh), 1)
+        pygame.draw.rect(screen, color, (sx, sy, int(bw * hp / 100), bh))
+        pygame.draw.rect(screen, WHITE, (sx, sy, bw, bh), 1)
