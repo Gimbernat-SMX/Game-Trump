@@ -61,6 +61,8 @@ class Assets:
         def img(filename):
             return pygame.image.load(_p("characters", name, filename)).convert_alpha()
 
+        # Los sprites originales del SSB (s1.png, m1.png…) miran hacia la DERECHA,
+        # igual que walkR en el código original. "l" es la versión volteada.
         stand_r   = img("s1.png")
         weak_r    = img("w1.png")
         heavy_r   = img("h1.png")

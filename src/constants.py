@@ -22,7 +22,7 @@ BLUE       = (30,  80,  220)
 
 # ---- Física (del original) ----
 GRAVITY = 0.5
-FRIC    = -0.12    # fricción horizontal
+FRIC    = -0.08    # fricción horizontal (menos = más deslizamiento, más velocidad punta)
 VEL     = 15       # velocidad de salto (vel.y = -VEL)
 
 # ---- Muertos si caen fuera ----
@@ -51,12 +51,12 @@ CHARACTER_LABELS = {
 
 # Stats: (weak_dmg, heavy_dmg, acceleration)
 CHARACTER_STATS = {
-    "mario": (3,    6,    0.5),
-    "luigi": (4,    8,    0.4),
-    "yoshi": (5,    10,   0.3),
-    "popo":  (5.5,  11,   0.25),
-    "nana":  (5.75, 11.5, 0.225),
-    "link":  (6,    12,   0.2),
+    "mario": (3,    6,    1.0),
+    "luigi": (4,    8,    0.85),
+    "yoshi": (5,    10,   0.7),
+    "popo":  (5.5,  11,   0.6),
+    "nana":  (5.75, 11.5, 0.55),
+    "link":  (6,    12,   0.5),
 }
 
 # Walk frame counts (de los archivos m1..mN del SSB)

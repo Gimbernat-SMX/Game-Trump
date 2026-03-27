@@ -58,14 +58,31 @@ class Character(pygame.sprite.Sprite):
         self.acc.x += self.vel.x * FRIC
         self.vel   += self.acc
         self.pos   += self.vel + 0.5 * self.acc
+
+        # Clamp horizontal dentro del arena
+        if self.pos.x < 15:
+            self.pos.x = 15
+            self.vel.x = 0
+        elif self.pos.x > ARENA_WIDTH - 15:
+            self.pos.x = ARENA_WIDTH - 15
+            self.vel.x = 0
+
         self.rect.midbottom = self.pos
 
-        if self.vel.y > 0:
-            collision = pygame.sprite.spritecollide(self, platforms, False)
-            if collision:
-                self.pos.y  = collision[0].rect.top + 1
-                self.vel.y  = 0
-                self.rect.midbottom = self.pos
+        # Colisión hacia abajo: elegir la plataforma con top más alto (menor y)
+        # que esté realmente bajo los pies del personaje para evitar bugs en esquinas
+        if self.vel.y >= 0:
+            hits = pygame.sprite.spritecollide(self, platforms, False)
+            if hits:
+                # Filtrar solo plataformas cuyo top sea >= pos anterior (bajando hacia ellas)
+                landing = [p for p in hits if self.rect.bottom >= p.rect.top
+                           and self.rect.centerx >= p.rect.left
+                           and self.rect.centerx <= p.rect.right]
+                if landing:
+                    best = min(landing, key=lambda p: p.rect.top)
+                    self.pos.y  = best.rect.top + 1
+                    self.vel.y  = 0
+                    self.rect.midbottom = self.pos
 
         if self.pos.y > DEATH_Y:
             self.health = 0
