@@ -1,22 +1,23 @@
+"""Plataformas del arena SSB (posiciones del original)."""
 import pygame
-from src.constants import PLATFORMS, DARK_GREEN, GREEN, BROWN
+from src.constants import PLATFORMS
+from src.assets import Assets
 
 
-def get_platform_rects():
-    """Return list of pygame.Rect for all platforms (ground + floating)."""
-    return [pygame.Rect(*p) for p in PLATFORMS]
+class Platform(pygame.sprite.Sprite):
+    def __init__(self, x, y, w, h, is_floor=False):
+        super().__init__()
+        assets = Assets.get()
+        raw = assets.floor if is_floor else assets.platform
+        self.image = pygame.transform.scale(raw, (w, h))
+        self.rect  = self.image.get_rect(topleft=(x, y))
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
 
 
-def draw_platforms(screen: pygame.Surface, platform_rects):
-    """Render platforms (ground is solid, others are wood planks)."""
-    for i, r in enumerate(platform_rects):
-        if i == 0:
-            # Ground – already covered by whitehouse background mostly,
-            # draw a subtle solid strip
-            pygame.draw.rect(screen, DARK_GREEN, r)
-            pygame.draw.rect(screen, GREEN, (r.x, r.y, r.width, 5))
-        else:
-            # Floating platform (sign / plank style)
-            pygame.draw.rect(screen, BROWN, r)
-            pygame.draw.rect(screen, (160, 110, 55), (r.x, r.y, r.width, 4))
-            pygame.draw.rect(screen, (100, 60, 20), r, 1)
+def create_platform_group() -> pygame.sprite.Group:
+    group = pygame.sprite.Group()
+    for i, (x, y, w, h) in enumerate(PLATFORMS):
+        group.add(Platform(x, y, w, h, is_floor=(i == 0)))
+    return group
