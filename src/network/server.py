@@ -135,13 +135,20 @@ class Server:
             time.sleep(0.05)
         self._disconnect(slot)
 
-    def start_game(self):
+    def start_game(self, requested_by_slot: int = 0) -> bool:
+        """Inicia la partida solo si lo solicita el anfitrión (slot 0)."""
+        if requested_by_slot != 0:
+            return False
+        if self.game_started:
+            return True
+
         self.game_started = True
         data = {"type": GAME_START, "players": self._player_list_data()}
         with self._lock:
             socks = [(s, p.sock) for s, p in self._players.items() if p.sock]
         for _s, sock in socks:
             self._send(sock, data)
+        return True
 
     def broadcast_state(self, state: list):
         msg = {"type": GAME_STATE, "players": state}

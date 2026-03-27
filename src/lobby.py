@@ -50,8 +50,8 @@ def run_host_lobby(screen: pygame.Surface, assets, server) -> str:
 
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     if len(players) >= 1:
-                        server.start_game()
-                        return "start"
+                        if server.start_game(requested_by_slot=0):
+                            return "start"
 
         # ---- Dibujar ----
         screen.blit(assets.char_bg, (0, 0))
