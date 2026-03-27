@@ -10,7 +10,8 @@ from src.network.protocol import (
 )
 from src.network.discovery import LobbyDiscoveryResponder
 
-MAX_PLAYERS = 4
+DEFAULT_MAX_PLAYERS = 4
+ABS_MAX_PLAYERS = 100
 
 
 class _PlayerSlot:
@@ -25,13 +26,14 @@ class _PlayerSlot:
 
 
 class Server:
-    def __init__(self, host_name: str, host_char: str):
+    def __init__(self, host_name: str, host_char: str, max_players: int = DEFAULT_MAX_PLAYERS):
         self._lock    = threading.Lock()
         self._players: dict[int, _PlayerSlot] = {}
         self._next_slot = 1
         self._running   = True
         self.game_started = False
         self.host_name = host_name
+        self.max_players = max(2, min(ABS_MAX_PLAYERS, int(max_players)))
 
         # Slot 0 = host (no socket)
         self._players[0] = _PlayerSlot(0, host_name, host_char)
@@ -39,7 +41,7 @@ class Server:
         self._srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._srv.bind(("0.0.0.0", DEFAULT_PORT))
-        self._srv.listen(MAX_PLAYERS - 1)
+        self._srv.listen(self.max_players - 1)
         self._srv.settimeout(0.2)
 
         self._discovery = LobbyDiscoveryResponder(self._discovery_info)
@@ -59,7 +61,7 @@ class Server:
             except Exception:
                 break
             with self._lock:
-                if len(self._players) >= MAX_PLAYERS:
+                if len(self._players) >= self.max_players:
                     conn.close()
                     continue
                 slot = self._next_slot
@@ -138,6 +140,16 @@ class Server:
             self._send(p.sock, {"type": KICKED})
             time.sleep(0.05)
         self._disconnect(slot)
+
+    def set_host_char(self, char: str):
+        """Permite al anfitrión cambiar su personaje antes de iniciar la partida."""
+        if self.game_started:
+            return
+        with self._lock:
+            host = self._players.get(0)
+            if host:
+                host.char = str(char)
+        self._broadcast_player_list()
 
     def start_game(self, requested_by_slot: int = 0) -> bool:
         """Inicia la partida solo si lo solicita el anfitrión (slot 0)."""
@@ -231,6 +243,6 @@ class Server:
         return {
             "host_name": self.host_name,
             "players": players,
-            "max_players": MAX_PLAYERS,
+            "max_players": self.max_players,
             "game_started": self.game_started,
         }

@@ -10,6 +10,10 @@ from src.network.protocol import get_local_ip
 _SLOT_NAMES = {0: "Anfitrión", 1: "Jugador 2", 2: "Jugador 3", 3: "Jugador 4"}
 
 
+def _slot_label(slot: int) -> str:
+    return _SLOT_NAMES.get(slot, f"Jugador {slot + 1}")
+
+
 def run_host_lobby(screen: pygame.Surface, assets, server) -> str:
     """
     Pantalla de lobby para el HOST.
@@ -22,6 +26,12 @@ def run_host_lobby(screen: pygame.Surface, assets, server) -> str:
 
     local_ip    = get_local_ip()
     selected    = 0   # índice del jugador seleccionado en la lista (para kick)
+    selected_char_idx = 0
+
+    players = server.get_player_list()
+    host_data = next((p for p in players if p["slot"] == 0), None)
+    if host_data and host_data.get("char") in CHARACTERS:
+        selected_char_idx = CHARACTERS.index(host_data["char"])
 
     while True:
         players = server.get_player_list()
@@ -47,6 +57,14 @@ def run_host_lobby(screen: pygame.Surface, assets, server) -> str:
                         if slot != 0:
                             server.kick(slot)
                             selected = max(0, selected - 1)
+
+                elif event.key == pygame.K_LEFT:
+                    selected_char_idx = (selected_char_idx - 1) % len(CHARACTERS)
+                    server.set_host_char(CHARACTERS[selected_char_idx])
+
+                elif event.key == pygame.K_RIGHT:
+                    selected_char_idx = (selected_char_idx + 1) % len(CHARACTERS)
+                    server.set_host_char(CHARACTERS[selected_char_idx])
 
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     if len(players) >= 1:
@@ -76,7 +94,7 @@ def run_host_lobby(screen: pygame.Surface, assets, server) -> str:
                 pygame.draw.rect(screen, (60, 60, 80), bg_rect, border_radius=4)
                 pygame.draw.rect(screen, YELLOW, bg_rect, 2, border_radius=4)
 
-            slot_lbl = _SLOT_NAMES.get(p["slot"], f"Slot {p['slot']}")
+            slot_lbl = _slot_label(p["slot"])
             char_lbl = CHARACTER_LABELS.get(p["char"], p["char"])
             text = f"{slot_lbl}: {p['name']}  [{char_lbl}]"
             surf = font_med.render(text, True, color)
@@ -89,15 +107,30 @@ def run_host_lobby(screen: pygame.Surface, assets, server) -> str:
 
             list_y += 50
 
-        # Espacio vacío
-        for i in range(len(players), 4):
-            empty = font_small.render(f"Esperando jugador {i + 1}...", True, DARK_GRAY)
+        total_slots = getattr(server, "max_players", 4)
+        connected = len(players)
+
+        cap_s = font_small.render(f"Jugadores conectados: {connected}/{total_slots}", True, LIGHT_GRAY)
+        screen.blit(cap_s, (SCREEN_WIDTH // 2 - cap_s.get_width() // 2, 124))
+
+        # Espacios vacíos (muestra solo algunos para no saturar la pantalla)
+        waiting = max(0, total_slots - connected)
+        to_show = min(4, waiting)
+        for i in range(to_show):
+            next_slot_num = connected + i + 1
+            empty = font_small.render(f"Esperando jugador {next_slot_num}...", True, DARK_GRAY)
             screen.blit(empty, (SCREEN_WIDTH // 2 - empty.get_width() // 2, list_y + 4))
             list_y += 50
+
+        if waiting > to_show:
+            more = font_small.render(f"... y {waiting - to_show} huecos mas", True, DARK_GRAY)
+            screen.blit(more, (SCREEN_WIDTH // 2 - more.get_width() // 2, list_y + 4))
+            list_y += 30
 
         # Instrucciones
         instructions = [
             "↑↓  Seleccionar jugador",
+            "←→  Cambiar tu personaje",
             "K   Expulsar jugador seleccionado",
             "ENTER   Iniciar partida",
             "ESC   Cancelar",
@@ -134,6 +167,11 @@ def run_client_lobby(screen: pygame.Surface, assets, client) -> str:
 
         players = client.get_player_list()
 
+        # Sincronizar selector local con el personaje actual del cliente en la sala.
+        me = next((p for p in players if p.get("slot") == client.slot), None)
+        if me and me.get("char") in CHARACTERS:
+            selected_char_idx = CHARACTERS.index(me["char"])
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); raise SystemExit
@@ -165,7 +203,7 @@ def run_client_lobby(screen: pygame.Surface, assets, client) -> str:
         list_y = 150
         for p in players:
             color    = PLAYER_COLORS[p["slot"] % len(PLAYER_COLORS)]
-            slot_lbl = _SLOT_NAMES.get(p["slot"], f"Slot {p['slot']}")
+            slot_lbl = _slot_label(p["slot"])
             char_lbl = CHARACTER_LABELS.get(p["char"], p["char"])
             marker   = " ◄" if p["slot"] == client.slot else ""
             text = f"{slot_lbl}: {p['name']}  [{char_lbl}]{marker}"

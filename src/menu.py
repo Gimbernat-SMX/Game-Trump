@@ -69,18 +69,30 @@ class Menu:
     # Pantalla de introducir nombre (host)
     # ------------------------------------------------------------------
 
-    def host_setup_screen(self, assets) -> "tuple[str, str] | None":
-        """Devuelve (nombre, personaje) o None si se cancela."""
+    def host_setup_screen(self, assets) -> "tuple[str, str, int] | None":
+        """Devuelve (nombre, personaje, max_jugadores) o None si se cancela."""
         while True:
-            name = self._name_input_screen(assets, "CREAR PARTIDA", "Tu nombre:")
-            if name is None:
+            max_players = self._number_input_screen(
+                assets,
+                "CREAR PARTIDA",
+                "Maximo de jugadores (2-100):",
+                min_value=2,
+                max_value=100,
+                default="4",
+            )
+            if max_players is None:
                 return None
 
-            char = self.character_screen(assets)
-            if char is None:
-                continue  # volver a introducir nombre
+            while True:
+                name = self._name_input_screen(assets, "CREAR PARTIDA", "Tu nombre:")
+                if name is None:
+                    break  # volver a elegir maximo de jugadores
 
-            return name, char
+                char = self.character_screen(assets)
+                if char is None:
+                    continue  # volver a introducir nombre
+
+                return name, char, max_players
 
     # ------------------------------------------------------------------
     # Pantalla de unirse a partida
@@ -393,6 +405,69 @@ class Menu:
             enter_s = self.font_stat.render("Enter confirmar   |   ESC volver", True, GRAY)
             self.screen.blit(enter_s, (SCREEN_WIDTH // 2 - enter_s.get_width() // 2,
                                        SCREEN_HEIGHT // 2 + 70))
+
+            pygame.display.flip()
+            clock.tick(FPS)
+
+    def _number_input_screen(self, assets, title: str, prompt: str,
+                             min_value: int, max_value: int,
+                             default: str = "") -> "int | None":
+        """Entrada numérica acotada. Devuelve int válido o None con ESC."""
+        font_t = pygame.font.SysFont("Arial", 36, bold=True)
+        font_p = pygame.font.SysFont("Arial", 24)
+        font_i = pygame.font.SysFont("Arial", 30)
+        clock = pygame.time.Clock()
+        text = default
+        cursor_tick = 0
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit(); raise SystemExit
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return None
+                    elif event.key == pygame.K_RETURN:
+                        if text.isdigit():
+                            value = int(text)
+                            if min_value <= value <= max_value:
+                                return value
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    elif event.unicode and event.unicode.isdigit() and len(text) < 3:
+                        text += event.unicode
+
+            self.screen.blit(assets.char_bg, (0, 0))
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 160))
+            self.screen.blit(overlay, (0, 0))
+
+            self._shadow(font_t, title, YELLOW, SCREEN_HEIGHT // 2 - 130)
+
+            ps = font_p.render(prompt, True, LIGHT_GRAY)
+            self.screen.blit(ps, (SCREEN_WIDTH // 2 - ps.get_width() // 2,
+                                  SCREEN_HEIGHT // 2 - 60))
+
+            # Caja de texto
+            cursor_tick += 1
+            cursor = "|" if (cursor_tick // 30) % 2 == 0 else ""
+            inp_s = font_i.render(text + cursor, True, WHITE)
+            box = pygame.Rect(SCREEN_WIDTH // 2 - 180, SCREEN_HEIGHT // 2 + 10, 360, 44)
+            pygame.draw.rect(self.screen, (40, 40, 60), box, border_radius=6)
+            pygame.draw.rect(self.screen, YELLOW, box, 2, border_radius=6)
+            self.screen.blit(inp_s, (box.x + 10, box.y + 7))
+
+            hint = self.font_stat.render(
+                f"Introduce un numero entre {min_value} y {max_value}",
+                True,
+                GRAY,
+            )
+            self.screen.blit(hint, (SCREEN_WIDTH // 2 - hint.get_width() // 2,
+                                    SCREEN_HEIGHT // 2 + 70))
+
+            enter_s = self.font_stat.render("Enter confirmar   |   ESC volver", True, GRAY)
+            self.screen.blit(enter_s, (SCREEN_WIDTH // 2 - enter_s.get_width() // 2,
+                                       SCREEN_HEIGHT // 2 + 92))
 
             pygame.display.flip()
             clock.tick(FPS)

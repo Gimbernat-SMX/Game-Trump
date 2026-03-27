@@ -12,9 +12,10 @@ env/
 
 # Distribution / packaging
 build/
+dist/
 *.egg-info/
 .eggs/
-
+.
 # Test / coverage artifact
 .pytest_cache/
 .coverage

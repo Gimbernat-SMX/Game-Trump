@@ -49,8 +49,8 @@ def main():
             if setup is None:
                 continue
 
-            name, char = setup
-            server = Server(name, char)
+            name, char, max_players = setup
+            server = Server(name, char, max_players=max_players)
             lobby_result = run_host_lobby(screen, assets, server)
 
             if lobby_result == "start":
