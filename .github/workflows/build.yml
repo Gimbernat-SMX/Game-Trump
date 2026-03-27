@@ -3,64 +3,144 @@ name: Build & Release
 on:
   push:
     tags:
-      - "v*"   # Se activa al hacer: git tag v1.0 && git push --tags
+      - "v*"
 
 permissions:
-  contents: write   # necesario para crear releases y subir archivos
+  contents: write
 
+# ──────────────────────────────────────────────────────────────────────────────
+# WINDOWS  →  GimbernatBros-Installer.exe  (NSIS)
+# ──────────────────────────────────────────────────────────────────────────────
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            artifact: dist/GimbernatBros/GimbernatBros.exe
-            name: GimbernatBros-Windows.exe
-
-          - os: macos-latest
-            artifact: dist/GimbernatBros.app
-            name: GimbernatBros-Mac.zip
-
-          - os: ubuntu-latest
-            artifact: dist/GimbernatBros/GimbernatBros
-            name: GimbernatBros-Linux
-
-    runs-on: ${{ matrix.os }}
-
+  build-windows:
+    runs-on: windows-latest
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Instalar Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Instalar dependencias
         run: pip install pygame-ce pyinstaller
 
-      - name: Compilar
+      - name: Compilar con PyInstaller
         run: pyinstaller game.spec --clean --noconfirm
 
-      # --- Mac: comprimir .app en zip ---
-      - name: Comprimir .app (solo Mac)
-        if: runner.os == 'macOS'
-        run: zip -r dist/GimbernatBros-Mac.zip dist/GimbernatBros.app
+      - name: Crear instalador con NSIS
+        run: |
+          choco install nsis --no-progress -y
+          cd installer
+          makensis windows.nsi
 
-      # --- Subir artefacto al Release ---
-      - name: Subir ejecutable Windows/Linux
-        if: runner.os != 'macOS'
+      - name: Subir al Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.artifact }}
-          name: ${{ matrix.name }}
+          files: installer/GimbernatBros-Installer.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Subir ejecutable Mac
-        if: runner.os == 'macOS'
+# ──────────────────────────────────────────────────────────────────────────────
+# macOS  →  GimbernatBros.dmg
+# ──────────────────────────────────────────────────────────────────────────────
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install pygame-ce pyinstaller
+
+      - name: Compilar con PyInstaller
+        run: pyinstaller game.spec --clean --noconfirm
+
+      - name: Quitar cuarentena
+        run: xattr -cr dist/GimbernatBros.app
+
+      - name: Crear .dmg
+        run: |
+          mkdir dmg_tmp
+          cp -r dist/GimbernatBros.app dmg_tmp/
+          hdiutil create \
+            -volname "GimbernatBros" \
+            -srcfolder dmg_tmp \
+            -ov -format UDZO \
+            dist/GimbernatBros.dmg
+
+      - name: Subir al Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/GimbernatBros-Mac.zip
+          files: dist/GimbernatBros.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Linux  →  gimbernatbros.deb
+# ──────────────────────────────────────────────────────────────────────────────
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias del sistema
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libsdl2-dev
+
+      - name: Instalar dependencias Python
+        run: pip install pygame-ce pyinstaller
+
+      - name: Compilar con PyInstaller
+        run: pyinstaller game.spec --clean --noconfirm
+
+      - name: Crear paquete .deb
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p deb/DEBIAN
+          mkdir -p deb/usr/local/lib/gimbernatbros
+          mkdir -p deb/usr/local/bin
+          mkdir -p deb/usr/share/applications
+
+          cp -r dist/GimbernatBros/* deb/usr/local/lib/gimbernatbros/
+
+          # Script lanzador
+          cat > deb/usr/local/bin/gimbernatbros << 'EOF'
+          #!/bin/bash
+          /usr/local/lib/gimbernatbros/GimbernatBros "$@"
+          EOF
+          chmod +x deb/usr/local/bin/gimbernatbros
+
+          # Archivo de control
+          cat > deb/DEBIAN/control << EOF
+          Package: gimbernatbros
+          Version: $VERSION
+          Architecture: amd64
+          Maintainer: Gimbernat <gimbernat@example.com>
+          Description: GimbernatBros - Juego de lucha
+          EOF
+
+          # Entrada en el menú de aplicaciones
+          cat > deb/usr/share/applications/gimbernatbros.desktop << EOF
+          [Desktop Entry]
+          Name=GimbernatBros
+          Exec=/usr/local/lib/gimbernatbros/GimbernatBros
+          Type=Application
+          Categories=Game;
+          EOF
+
+          dpkg-deb --build deb dist/gimbernatbros.deb
+
+      - name: Subir al Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/gimbernatbros.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
