@@ -37,13 +37,19 @@ def main():
         # ── Un jugador ──────────────────────────────────────────────────
         if mode == "singleplayer":
             char   = menu.character_screen(assets)
+            if char is None:
+                continue
             game   = Game(screen, char)
             result = game.run()
             menu.end_screen(assets, result, game.kills)
 
         # ── Crear partida ───────────────────────────────────────────────
         elif mode == "host":
-            name, char = menu.host_setup_screen(assets)
+            setup = menu.host_setup_screen(assets)
+            if setup is None:
+                continue
+
+            name, char = setup
             server = Server(name, char)
             lobby_result = run_host_lobby(screen, assets, server)
 
@@ -57,7 +63,11 @@ def main():
 
         # ── Unirse a partida ────────────────────────────────────────────
         elif mode == "join":
-            name, ip, char = menu.join_setup_screen(assets)
+            setup = menu.join_setup_screen(assets)
+            if setup is None:
+                continue
+
+            name, ip, char = setup
             client = Client()
 
             if not client.connect(ip, name, char):

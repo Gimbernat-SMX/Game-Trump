@@ -61,8 +61,8 @@ class HUD:
         # Controles
         y = SCREEN_HEIGHT - 110
         pygame.draw.line(screen, GRAY, (x, y), (PANEL_X + PANEL_W - 10, y)); y += 8
-        for line in ["A/D Mover", "W Saltar", "E Ataque normal",
-                     "Q Ataque especial", "R Bloquear", "ESC Pausa"]:
+        for line in ["A/D Mover", "W Saltar", "E Ataque debil",
+                 "Q Ataque fuerte", "R Bloquear", "ESC Pausa"]:
             t = self.font_small.render(line, True, GRAY)
             screen.blit(t, (x, y)); y += 18
 

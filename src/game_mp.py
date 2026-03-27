@@ -213,8 +213,8 @@ class GameMPHost:
         cy = SCREEN_HEIGHT - 120
         pygame.draw.line(self.screen, GRAY,
                          (x, cy), (SCREEN_WIDTH - 10, cy)); cy += 8
-        for line in ["A/D  Mover", "W  Saltar", "F  Ataque débil",
-                     "X  Ataque fuerte", "ESC  Pausa", "F10  Pantalla completa"]:
+        for line in ["A/D  Mover", "W  Saltar", "E  Ataque debil",
+                 "Q  Ataque fuerte", "R  Bloquear", "F10  Pantalla completa"]:
             s = self._font_small.render(line, True, GRAY)
             self.screen.blit(s, (x, cy)); cy += 18
 
@@ -327,8 +327,8 @@ class GameMPClient:
         cy = SCREEN_HEIGHT - 120
         pygame.draw.line(self.screen, GRAY,
                          (x, cy), (SCREEN_WIDTH - 10, cy)); cy += 8
-        for line in ["A/D  Mover", "W  Saltar", "F  Ataque débil",
-                     "X  Ataque fuerte", "F10  Pantalla completa"]:
+        for line in ["A/D  Mover", "W  Saltar", "E  Ataque debil",
+                 "Q  Ataque fuerte", "R  Bloquear", "F10  Pantalla completa"]:
             s = self._font_small.render(line, True, GRAY)
             self.screen.blit(s, (x, cy)); cy += 18
 

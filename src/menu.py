@@ -4,6 +4,7 @@ from src.constants import (
     SCREEN_WIDTH, SCREEN_HEIGHT, FPS, CHARACTERS, CHARACTER_LABELS,
     CHARACTER_STATS, WHITE, BLACK, YELLOW, GRAY, LIGHT_GRAY, DARK_GRAY,
 )
+from src.network.discovery import discover_lobbies
 
 
 class Menu:
@@ -57,7 +58,7 @@ class Menu:
                 self.screen.blit(surf, (SCREEN_WIDTH // 2 - surf.get_width() // 2,
                                         280 + i * 70))
 
-            hint = self.font_stat.render("↑↓ Navegar   |   Enter Confirmar", True, GRAY)
+            hint = self.font_stat.render("↑↓ Navegar   |   Enter confirmar   |   F10 pantalla completa", True, GRAY)
             self.screen.blit(hint, (SCREEN_WIDTH // 2 - hint.get_width() // 2,
                                     SCREEN_HEIGHT - 40))
 
@@ -68,31 +69,126 @@ class Menu:
     # Pantalla de introducir nombre (host)
     # ------------------------------------------------------------------
 
-    def host_setup_screen(self, assets) -> "tuple[str, str]":
-        """Devuelve (nombre, personaje)."""
-        name = self._name_input_screen(assets, "CREAR PARTIDA", "Tu nombre:")
-        char = self.character_screen(assets)
-        return name, char
+    def host_setup_screen(self, assets) -> "tuple[str, str] | None":
+        """Devuelve (nombre, personaje) o None si se cancela."""
+        while True:
+            name = self._name_input_screen(assets, "CREAR PARTIDA", "Tu nombre:")
+            if name is None:
+                return None
+
+            char = self.character_screen(assets)
+            if char is None:
+                continue  # volver a introducir nombre
+
+            return name, char
 
     # ------------------------------------------------------------------
     # Pantalla de unirse a partida
     # ------------------------------------------------------------------
 
-    def join_setup_screen(self, assets) -> "tuple[str, str, str]":
-        """Devuelve (nombre, ip, personaje)."""
-        name = self._name_input_screen(assets, "UNIRSE A PARTIDA", "Tu nombre:")
-        ip   = self._name_input_screen(assets, "UNIRSE A PARTIDA",
-                                       "IP del anfitrión:", max_len=15,
-                                       hint="Ejemplo: 192.168.1.10")
-        char = self.character_screen(assets)
-        return name, ip, char
+    def join_setup_screen(self, assets) -> "tuple[str, str, str] | None":
+        """Devuelve (nombre, ip, personaje) o None si se cancela."""
+        while True:
+            name = self._name_input_screen(assets, "UNIRSE A PARTIDA", "Tu nombre:")
+            if name is None:
+                return None
+
+            while True:
+                ip = self._lobby_browser_screen(assets)
+                if not ip:
+                    break  # volver a pantalla de nombre
+
+                char = self.character_screen(assets)
+                if char is None:
+                    continue  # volver a selección de sala
+
+                return name, ip, char
+
+    def _lobby_browser_screen(self, assets) -> "str | None":
+        """Pantalla para descubrir y seleccionar salas LAN disponibles."""
+        font_t = pygame.font.SysFont("Arial", 36, bold=True)
+        font_p = pygame.font.SysFont("Arial", 24, bold=True)
+        font_s = pygame.font.SysFont("Arial", 18)
+        clock = pygame.time.Clock()
+
+        lobbies = discover_lobbies()
+        selected = 0
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit(); raise SystemExit
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return None
+                    if event.key == pygame.K_UP and lobbies:
+                        selected = (selected - 1) % len(lobbies)
+                    elif event.key == pygame.K_DOWN and lobbies:
+                        selected = (selected + 1) % len(lobbies)
+                    elif event.key in (pygame.K_r, pygame.K_F5):
+                        lobbies = discover_lobbies()
+                        if lobbies:
+                            selected = min(selected, len(lobbies) - 1)
+                        else:
+                            selected = 0
+                    elif event.key == pygame.K_m:
+                        manual_ip = self._name_input_screen(
+                            assets,
+                            "UNIRSE A PARTIDA",
+                            "IP del anfitrión:",
+                            max_len=15,
+                            hint="Ejemplo: 192.168.1.10",
+                        )
+                        if manual_ip:
+                            return manual_ip
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        if lobbies:
+                            return lobbies[selected]["ip"]
+
+            self.screen.blit(assets.char_bg, (0, 0))
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 165))
+            self.screen.blit(overlay, (0, 0))
+
+            self._shadow(font_t, "SALAS EN RED LOCAL", YELLOW, 80)
+
+            if not lobbies:
+                msg = font_p.render("No se encontraron partidas.", True, LIGHT_GRAY)
+                self.screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2,
+                                       SCREEN_HEIGHT // 2 - 40))
+                hint = font_s.render("R/F5 buscar otra vez   |   M IP manual   |   ESC volver",
+                                     True, GRAY)
+                self.screen.blit(hint, (SCREEN_WIDTH // 2 - hint.get_width() // 2,
+                                        SCREEN_HEIGHT - 80))
+            else:
+                y = 170
+                for i, lobby in enumerate(lobbies):
+                    is_sel = (i == selected)
+                    rect = pygame.Rect(SCREEN_WIDTH // 2 - 320, y - 6, 640, 48)
+                    if is_sel:
+                        pygame.draw.rect(self.screen, (60, 60, 80), rect, border_radius=6)
+                        pygame.draw.rect(self.screen, YELLOW, rect, 2, border_radius=6)
+
+                    txt = (f"{lobby['host_name']}  |  {lobby['ip']}:{lobby['port']}"
+                           f"  |  Jugadores: {lobby['players']}/{lobby['max_players']}")
+                    s = font_s.render(txt, True, WHITE if is_sel else LIGHT_GRAY)
+                    self.screen.blit(s, (SCREEN_WIDTH // 2 - 300, y + 9))
+                    y += 56
+
+                hint = font_s.render("↑↓ seleccionar   |   Enter unir   |   R/F5 refrescar   |   M IP manual   |   ESC volver",
+                                     True, GRAY)
+                self.screen.blit(hint, (SCREEN_WIDTH // 2 - hint.get_width() // 2,
+                                        SCREEN_HEIGHT - 80))
+
+            pygame.display.flip()
+            clock.tick(FPS)
 
     # ------------------------------------------------------------------
     # Pantalla de selección de personaje
     # ------------------------------------------------------------------
 
-    def character_screen(self, assets) -> str:
-        """Devuelve el nombre del personaje elegido."""
+    def character_screen(self, assets) -> "str | None":
+        """Devuelve el personaje elegido o None si se cancela con ESC."""
         selected = 0
         clock    = pygame.time.Clock()
 
@@ -113,6 +209,8 @@ class Menu:
                         selected = (selected - 1) % len(CHARACTERS)
                     elif event.key == pygame.K_RIGHT:
                         selected = (selected + 1) % len(CHARACTERS)
+                    elif event.key == pygame.K_ESCAPE:
+                        return None
                     elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                         return CHARACTERS[selected]
 
@@ -156,7 +254,7 @@ class Menu:
                 stats_y += 20
 
             self._shadow(self.font_small,
-                         "← / →  elegir   |   Enter confirmar   |   F10 pantalla completa",
+                         "← / → elegir   |   Enter confirmar   |   ESC volver   |   F10 pantalla completa",
                          LIGHT_GRAY, SCREEN_HEIGHT - 35)
 
             pygame.display.flip()
@@ -243,8 +341,8 @@ class Menu:
     # ------------------------------------------------------------------
 
     def _name_input_screen(self, assets, title: str, prompt: str,
-                            max_len: int = 16, hint: str = "") -> str:
-        """Pantalla de entrada de texto. Devuelve el texto introducido."""
+                            max_len: int = 16, hint: str = "") -> "str | None":
+        """Pantalla de entrada de texto. Devuelve texto o None con ESC."""
         font_t = pygame.font.SysFont("Arial", 36, bold=True)
         font_p = pygame.font.SysFont("Arial", 24)
         font_i = pygame.font.SysFont("Arial", 30)
@@ -259,6 +357,8 @@ class Menu:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN and text.strip():
                         return text.strip()
+                    elif event.key == pygame.K_ESCAPE:
+                        return None
                     elif event.key == pygame.K_BACKSPACE:
                         text = text[:-1]
                     elif event.unicode and len(text) < max_len:
@@ -290,7 +390,7 @@ class Menu:
             pygame.draw.rect(self.screen, YELLOW, box, 2, border_radius=6)
             self.screen.blit(inp_s, (box.x + 10, box.y + 7))
 
-            enter_s = self.font_stat.render("Enter para confirmar", True, GRAY)
+            enter_s = self.font_stat.render("Enter confirmar   |   ESC volver", True, GRAY)
             self.screen.blit(enter_s, (SCREEN_WIDTH // 2 - enter_s.get_width() // 2,
                                        SCREEN_HEIGHT // 2 + 70))
 

@@ -8,6 +8,7 @@ from src.network.protocol import (
     JOIN_OK, PLAYER_LIST, KICKED, GAME_START, GAME_STATE, GAME_END,
     DEFAULT_PORT,
 )
+from src.network.discovery import LobbyDiscoveryResponder
 
 MAX_PLAYERS = 4
 
@@ -30,6 +31,7 @@ class Server:
         self._next_slot = 1
         self._running   = True
         self.game_started = False
+        self.host_name = host_name
 
         # Slot 0 = host (no socket)
         self._players[0] = _PlayerSlot(0, host_name, host_char)
@@ -39,6 +41,8 @@ class Server:
         self._srv.bind(("0.0.0.0", DEFAULT_PORT))
         self._srv.listen(MAX_PLAYERS - 1)
         self._srv.settimeout(0.2)
+
+        self._discovery = LobbyDiscoveryResponder(self._discovery_info)
 
         threading.Thread(target=self._accept_loop, daemon=True).start()
 
@@ -190,6 +194,8 @@ class Server:
 
     def close(self):
         self._running = False
+        if self._discovery:
+            self._discovery.close()
         try:
             self._srv.close()
         except Exception:
@@ -216,3 +222,15 @@ class Server:
             sock.sendall(encode(msg))
         except Exception:
             pass
+
+    def _discovery_info(self) -> "dict | None":
+        if not self._running or self.game_started:
+            return None
+        with self._lock:
+            players = len(self._players)
+        return {
+            "host_name": self.host_name,
+            "players": players,
+            "max_players": MAX_PLAYERS,
+            "game_started": self.game_started,
+        }

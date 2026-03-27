@@ -17,6 +17,7 @@ GAME_STATE   = "game_state"   # {"type":"game_state","players":[...]}
 GAME_END     = "game_end"     # {"type":"game_end","winner":"...","winner_slot":0}
 
 DEFAULT_PORT = 5555
+DISCOVERY_PORT = 5556
 
 
 def encode(msg: dict) -> bytes:
