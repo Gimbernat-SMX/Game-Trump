@@ -1,9 +1,16 @@
 """Carga centralizada de todos los assets del juego SSB."""
 import os
+import sys
 import pygame
 from src.constants import ARENA_WIDTH, SCREEN_HEIGHT, CHARACTERS, WALK_FRAMES
 
-_BASE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "images")
+# En apps congeladas (PyInstaller) los archivos se extraen en sys._MEIPASS
+if getattr(sys, "frozen", False):
+    _ROOT = sys._MEIPASS
+else:
+    _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+_BASE = os.path.join(_ROOT, "assets", "images")
 
 
 def _p(*parts):

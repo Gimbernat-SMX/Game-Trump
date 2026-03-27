@@ -19,9 +19,10 @@ def main():
     pygame.display.set_caption(TITLE)
 
     try:
+        _root = sys._MEIPASS if getattr(sys, "frozen", False) else \
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         icon = pygame.image.load(
-            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                         "assets", "images", "others", "icon.png"))
+            os.path.join(_root, "assets", "images", "others", "icon.png"))
         pygame.display.set_icon(icon)
     except Exception:
         pass

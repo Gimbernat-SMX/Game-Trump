@@ -1,10 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
-import os
 
 block_cipher = None
-
-APP_NAME = "GimbernatBros"
+APP_NAME     = "GimbernatBros"
 
 a = Analysis(
     ["launcher.py"],
@@ -55,17 +53,13 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
+    exclude_binaries=True,   # one-dir mode
     name=APP_NAME,
     debug=False,
     strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,        # sin ventana de consola
+    upx=False,               # UPX desactivado – evita corrupción en Mac
+    console=False,
     bootloader_ignore_signals=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -74,10 +68,21 @@ exe = EXE(
     entitlements_file=None,
 )
 
-# En macOS, generar también el .app
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    name=APP_NAME,
+)
+
+# macOS: empaquetar en .app
 if sys.platform == "darwin":
     app = BUNDLE(
-        exe,
+        coll,
         name=APP_NAME + ".app",
         bundle_identifier="com.gimbernat.gimbernatbros",
     )
