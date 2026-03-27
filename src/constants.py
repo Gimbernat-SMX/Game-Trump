@@ -76,6 +76,10 @@ WEAK_ATTACK  = "weak"
 HEAVY_ATTACK = "heavy"
 DAMAGED      = "damaged"
 DEAD         = "dead"
+BLOCK        = "block"
+
+# ---- Escudo ----
+BLOCK_DAMAGE_MULT = 0.1   # recibe el 10% del daño al bloquear
 
 # ---- Combate ----
 ATTACK_DURATION   = 35   # frames que dura la animación de ataque (~0.58s a 60fps)

@@ -75,14 +75,14 @@ class Client:
     # ------------------------------------------------------------------
 
     def send_input(self, left: bool, right: bool, jump: bool,
-                   weak: bool, heavy: bool):
+                   weak: bool, heavy: bool, block: bool = False):
         if not self.connected:
             return
         try:
             self._sock.sendall(encode({
                 "type": INPUT,
                 "left": left, "right": right, "jump": jump,
-                "weak": weak, "heavy": heavy,
+                "weak": weak, "heavy": heavy, "block": block,
             }))
         except Exception:
             self.connected = False

@@ -42,9 +42,11 @@ class Player(Character):
                 self._jump_queued = False
                 self.jump(platforms)
 
-            if keys[pygame.K_f]:
+            self.blocking = bool(keys[pygame.K_r])
+
+            if keys[pygame.K_e] and not self.blocking:
                 self.weak_attack(enemies)
-            elif keys[pygame.K_x]:
+            elif keys[pygame.K_q] and not self.blocking:
                 self.heavy_attack(enemies)
         else:
             self.acc = vec(0.0, GRAVITY)

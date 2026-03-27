@@ -5,9 +5,9 @@ Recibe char_name como parámetro – sin herencia dinámica.
 import pygame
 from src.constants import (
     GRAVITY, FRIC, VEL, ARENA_WIDTH, DEATH_Y,
-    STAND, WALK, WEAK_ATTACK, HEAVY_ATTACK, DAMAGED, DEAD,
+    STAND, WALK, WEAK_ATTACK, HEAVY_ATTACK, DAMAGED, DEAD, BLOCK,
     ATTACK_DURATION, DAMAGED_DURATION, ATTACK_RANGE,
-    CHARACTER_STATS, WALK_FRAMES,
+    CHARACTER_STATS, WALK_FRAMES, BLOCK_DAMAGE_MULT,
 )
 
 vec = pygame.math.Vector2
@@ -28,10 +28,11 @@ class Character(pygame.sprite.Sprite):
         self.acce   = acce
         self.n_walk = WALK_FRAMES[char_name]
 
-        self.health = 100.0
-        self.direc  = "right"
-        self.state  = STAND
-        self.alive  = True
+        self.health   = 100.0
+        self.direc    = "right"
+        self.state    = STAND
+        self.alive    = True
+        self.blocking = False
 
         # Frame de walk y throttle
         self.walk_c    = 0   # índice de frame actual (0..n_walk-1)
@@ -127,6 +128,8 @@ class Character(pygame.sprite.Sprite):
     def receive_damage(self, amount: float):
         if self.health <= 0:
             return
+        if self.blocking:
+            amount *= BLOCK_DAMAGE_MULT
         self.health = max(0.0, self.health - amount)
         self._damaged_timer = DAMAGED_DURATION
         if self.health <= 0:

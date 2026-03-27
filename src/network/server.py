@@ -19,7 +19,7 @@ class _PlayerSlot:
         self.char  = char
         self.sock  = sock
         self.input = {"left": False, "right": False, "jump": False,
-                      "weak": False, "heavy": False}
+                      "weak": False, "heavy": False, "block": False}
         self.active = True
 
 
@@ -109,6 +109,7 @@ class Server:
                         inp["jump"] = True
                     inp["weak"]  = bool(msg.get("weak",  False))
                     inp["heavy"] = bool(msg.get("heavy", False))
+                    inp["block"] = bool(msg.get("block", False))
 
     def _disconnect(self, slot: int):
         with self._lock:

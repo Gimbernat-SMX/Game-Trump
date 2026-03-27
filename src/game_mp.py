@@ -73,8 +73,9 @@ class GameMPHost:
             "left":  bool(keys[pygame.K_a]),
             "right": bool(keys[pygame.K_d]),
             "jump":  self._jump_queued,
-            "weak":  bool(keys[pygame.K_f]),
-            "heavy": bool(keys[pygame.K_x]),
+            "weak":  bool(keys[pygame.K_e]),
+            "heavy": bool(keys[pygame.K_q]),
+            "block": bool(keys[pygame.K_r]),
         }
         self._jump_queued = False
 
@@ -138,10 +139,12 @@ class GameMPHost:
             if inp.get("jump"):
                 char.jump(self.platforms)
 
+            char.blocking = bool(inp.get("block", False))
+
             others = [c for c in all_chars if c is not char]
-            if inp.get("weak"):
+            if inp.get("weak") and not char.blocking:
                 char.weak_attack(others)
-            elif inp.get("heavy"):
+            elif inp.get("heavy") and not char.blocking:
                 char.heavy_attack(others)
         else:
             char.acc = vec(0.0, GRAVITY)
@@ -262,8 +265,9 @@ class GameMPClient:
             left  = bool(keys[pygame.K_a]),
             right = bool(keys[pygame.K_d]),
             jump  = self._jump_queued,
-            weak  = bool(keys[pygame.K_f]),
-            heavy = bool(keys[pygame.K_x]),
+            weak  = bool(keys[pygame.K_e]),
+            heavy = bool(keys[pygame.K_q]),
+            block = bool(keys[pygame.K_r]),
         )
         self._jump_queued = False
 
