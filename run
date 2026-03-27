@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# PumpTrump – Lanzador del juego
+# Uso: ./run
+
+PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
+VENV_PYTHON="$PROJ_DIR/venv/bin/python3"
+
+if [ ! -f "$VENV_PYTHON" ]; then
+    echo "Entorno virtual no encontrado. Ejecuta primero:  sh install.sh"
+    exit 1
+fi
+
+cd "$PROJ_DIR"
+exec "$VENV_PYTHON" -m src.main "$@"
