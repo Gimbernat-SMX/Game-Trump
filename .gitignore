@@ -15,7 +15,7 @@ build/
 *.egg-info/
 .eggs/
 
-# Test / coverage artifacts
+# Test / coverage artifact
 .pytest_cache/
 .coverage
 .coverage.*
